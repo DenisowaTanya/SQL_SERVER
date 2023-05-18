@@ -72,6 +72,9 @@ JOIN [Warehouse].[StockItems] t3 on t2.StockItemID=t3.StockItemID
 JOIN [Sales].[Orders] t4 on t2.OrderID=t4.OrderID
 JOIN [Sales].[Customers] t5 on t4.CustomerID=t5.CustomerID
 Where t2.[PickingCompletedWhen] is not null and (t3.UnitPrice>100 or [Quantity]>20)
+ORDER by [Quarter],[Part],[FormatOrderDate]
+OFFSET 1000 row
+Fetch First 100 Rows Only
 
 /*
 4. Заказы поставщикам (Purchasing.Suppliers),
