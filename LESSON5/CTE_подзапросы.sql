@@ -5,8 +5,8 @@ USE [WideWorldImporters]
 --сте
 ;WITH Invoice_CTE ([SalespersonPersonID])
 AS (SELECT [SalespersonPersonID]
-            FROM [Sales].[Invoices]
-			Where  [InvoiceDate]='2015-07-04')
+    FROM [Sales].[Invoices]
+    Where  [InvoiceDate]='2015-07-04')
 SELECT [PersonID],
 	   [FullName]
 FROM [Application].[People] t1 
@@ -15,11 +15,11 @@ WHERE [IsSalesperson]=1 and t2.SalespersonPersonID is null
 
 --подзапрос
 SELECT [PersonID],
-	   [FullName]
+       [FullName]
 FROM [Application].[People] t1
 LEFT JOIN  (SELECT [SalespersonPersonID]
             FROM [Sales].[Invoices]
-			Where  [InvoiceDate]='2015-07-04')t2 on t1.PersonID=t2.SalespersonPersonID
+	    Where  [InvoiceDate]='2015-07-04')t2 on t1.PersonID=t2.SalespersonPersonID
 WHERE [IsSalesperson]=1 and t2.SalespersonPersonID is null
 
 /*2. Выберите товары с минимальной ценой (подзапросом). 
@@ -65,13 +65,13 @@ AS (SELECT TOP 5 [CustomerID],[TransactionAmount]
 	ORDER BY [TransactionAmount] DESC)
 SELECT t1.[CustomerID],
        [CustomerName],
-	   t2.TransactionAmount
+       t2.TransactionAmount
 FROM [Sales].[Customers] t1
 JOIN MaxPay_CTE t2 on t1.CustomerID=t2.CustomerID
 
 SELECT t1.[CustomerID],
        [CustomerName],
-	   t2.TransactionAmount
+       t2.TransactionAmount
 FROM [Sales].[Customers] t1
 JOIN (SELECT TOP 5 [CustomerID],[TransactionAmount]
 	FROM [Sales].[CustomerTransactions]
@@ -80,7 +80,7 @@ JOIN (SELECT TOP 5 [CustomerID],[TransactionAmount]
 SElECT TOP 5
        t1.[CustomerID],
        [CustomerName],
-	   t2.TransactionAmount
+       t2.TransactionAmount
 FROM [Sales].[Customers] t1
 JOIN [Sales].[CustomerTransactions] t2 on t1.CustomerID=t2.CustomerID
 ORDER BY t2.TransactionAmount DESC
@@ -88,7 +88,7 @@ ORDER BY t2.TransactionAmount DESC
 /*4. Выберите города (ид и название), в которые были доставлены товары, входящие в тройку самых дорогих товаров, 
 а также имя сотрудника, который осуществлял упаковку заказов (PackedByPersonID).*/
 
-WITH Expen_CTE ([StockItemID],[StockItemName])
+;WITH Expen_CTE ([StockItemID],[StockItemName])
 AS 
 (SELECT TOP 3 [StockItemID],[StockItemName]
  FROM[Warehouse].[StockItems]
@@ -207,7 +207,7 @@ ORDER BY t1.TotalSummByInvoice desc
 /* Второй запрос, на мой взгляд выглядит лучше первого,
 В сте вычисляется 8 строк. Они соединяются с остальными строками.
 По плану второй запрос слегка получше 48%, а в первом  - 52%.
-ПО затреченному времени не очень поняла
+ПО затраченному времени не очень поняла
 Использовала : SET STATISTICS IO, TIME ON
 На первый запрос:  
 Время работы SQL Server:
