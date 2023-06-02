@@ -39,6 +39,7 @@ AS
 	    SUM(t1.[ExtendedPrice]) as [SumMonth]
 FROM [Sales].[InvoiceLines] t1
 JOIN [Sales].[Invoices] t3 on t1.InvoiceID=t3.InvoiceID
+JOIN [Sales].[CustomerTransactions] t4 on t3.InvoiceID=t4.InvoiceID
 Where Year(t3.InvoiceDate)>=2015
 Group by Year(t3.InvoiceDate),
 	     month(t3.InvoiceDate))
@@ -53,7 +54,7 @@ JOIN [Sales].[Invoices] as T2 on T1.MonthNum=month(T2.InvoiceDate) and
 JOIN [Sales].[InvoiceLines] T3 on T2.InvoiceID=T3.InvoiceID
 JOIN [Sales].[Customers] T4 on T2.CustomerID=T4.CustomerID
 Group By [Year],[MonthNum],[SumMonth],T2.InvoiceID, T2.InvoiceDate, T4.CustomerName 
-ORDER BY T2.InvoiceID
+ORDER BY T2.InvoiceDate
 /*
 2. Сделайте расчет суммы нарастающим итогом в предыдущем запросе с помощью оконной функции.
    Сравните производительность запросов 1 и 2 с помощью set statistics time, io on
@@ -66,6 +67,7 @@ AS
 	    SUM(t1.[ExtendedPrice]) as [SumMonth]
 FROM [Sales].[InvoiceLines] t1
 JOIN [Sales].[Invoices] t3 on t1.InvoiceID=t3.InvoiceID
+JOIN [Sales].[CustomerTransactions] t4 on t3.InvoiceID=t4.InvoiceID
 Where Year(t3.InvoiceDate)>=2015
 Group by Year(t3.InvoiceDate),
 	     month(t3.InvoiceDate))
@@ -81,15 +83,11 @@ JOIN (SELECT [Year],
 GROUP BY t1.InvoiceID, t1.InvoiceDate,t3.CustomerName, t4.Total
 ORDER BY t1.InvoiceID
 
-/*Результаты по статистике по первому запросу: Время работы SQL Server:
-                                               Время ЦП = 6000 мс, затраченное время = 7689 мс.
-                                               Время синтаксического анализа и компиляции SQL Server: 
-                                                время ЦП = 0 мс, истекшее время = 0 мс.
+/*Результаты по статистике по первому запросу:  Время работы SQL Server:
+                                                Время ЦП = 6094 мс, затраченное время = 7300 мс.
 
-   Результаты по второму: Время работы SQL Server:
-                          Время ЦП = 1016 мс, затраченное время = 1810 мс.
-                          Время синтаксического анализа и компиляции SQL Server: 
-                          время ЦП = 0 мс, истекшее время = 0 мс.
+   Результаты по второму:  Время работы SQL Server:
+						   Время ЦП = 859 мс, затраченное время = 1780 мс.
 
 Второй запрос с использованием оконных функций оказался более быстрым и затратил меньше ресурсов
 В первом запросе было больше сканирований, чем во втором/*
@@ -106,9 +104,10 @@ AS
 	    t3.StockItemName,
 	    SUM(t1.Quantity) as [QuanMonth],
 	    ROW_NUMBER() OVER (partition by month(t2.InvoiceDate) ORDER BY SUM(t1.Quantity) desc) as [RN]
-FROM [WideWorldImporters].[Sales].[InvoiceLines] t1
-JOIN [WideWorldImporters].[Sales].[Invoices] t2 on t1.InvoiceID=t2.InvoiceID
-JOIN [WideWorldImporters].[Warehouse].[StockItems] t3 on t1.StockItemID=t3.StockItemID
+FROM [Sales].[InvoiceLines] t1
+JOIN [Sales].[Invoices] t2 on t1.InvoiceID=t2.InvoiceID
+JOIN [Warehouse].[StockItems] t3 on t1.StockItemID=t3.StockItemID
+JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID
 Where Year(t2.InvoiceDate)=2016
 GROUP BY month(t2.InvoiceDate),t3.StockItemName)
 
@@ -163,6 +162,7 @@ FROM [WideWorldImporters].[Sales].[Invoices] t1
 JOIN [WideWorldImporters].[Application].[People] t2 on t1.SalespersonPersonID=t2.PersonID
 JOIN [WideWorldImporters].[Sales].[Customers] t3 on t1.CustomerID=t3.CustomerID
 JOIN [WideWorldImporters].[Sales].[InvoiceLines] t4 on t1.InvoiceID=t4.InvoiceID
+JOIN [Sales].[CustomerTransactions] t5 on t1.InvoiceID=t5.InvoiceID
 GROUP BY t1.SalespersonPersonID,
 	     t2.[FullName],
 	     t1.CustomerID,
@@ -176,7 +176,7 @@ InvoiceDate,
 SumInv
 --[RN]
 FROM lastSales_CTE
-Where [RN]=1
+Where [RN]=1 
 
 /*
 6. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
@@ -192,7 +192,8 @@ AS
 		dense_Rank() OVER (PARTITION BY t1.CustomerName ORDER BY t3.UnitPrice DESC) as DR
 FROM [Sales].[Customers] t1
 JOIN [Sales].[Invoices] t2 on t1.CustomerID=t2.CustomerID
-JOIN [Sales].[InvoiceLines] t3 on t2.InvoiceID=t3.InvoiceID)
+JOIN [Sales].[InvoiceLines] t3 on t2.InvoiceID=t3.InvoiceID
+JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID)
 SELECT CustomerID,CustomerName,StockItemID,UnitPrice,InvoiceDate
 FROM MY_CTE
 WHERE DR in (1,2)
@@ -209,8 +210,10 @@ AS
 		dense_Rank() OVER (PARTITION BY t1.CustomerName ORDER BY t3.UnitPrice DESC) as DR
 FROM [Sales].[Customers] t1
 JOIN [Sales].[Invoices] t2 on t1.CustomerID=t2.CustomerID
-JOIN [Sales].[InvoiceLines] t3 on t2.InvoiceID=t3.InvoiceID)
+JOIN [Sales].[InvoiceLines] t3 on t2.InvoiceID=t3.InvoiceID
+JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID)
 SELECT CustomerID, CustomerName, StockItemID, UnitPrice, MAX(InvoiceDate) as max_InvoiceDate
 FROM MY_CTE
 WHERE DR in (1,2)
 GROUP BY CustomerID, CustomerName, StockItemID, UnitPrice
+
