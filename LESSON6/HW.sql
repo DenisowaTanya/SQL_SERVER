@@ -54,7 +54,7 @@ JOIN [Sales].[Invoices] as T2 on T1.MonthNum=month(T2.InvoiceDate) and
 JOIN [Sales].[InvoiceLines] T3 on T2.InvoiceID=T3.InvoiceID
 JOIN [Sales].[Customers] T4 on T2.CustomerID=T4.CustomerID
 Group By [Year],[MonthNum],[SumMonth],T2.InvoiceID, T2.InvoiceDate, T4.CustomerName 
-ORDER BY T2.InvoiceDate
+ORDER BY T2.InvoiceID
 /*
 2. Сделайте расчет суммы нарастающим итогом в предыдущем запросе с помощью оконной функции.
    Сравните производительность запросов 1 и 2 с помощью set statistics time, io on
