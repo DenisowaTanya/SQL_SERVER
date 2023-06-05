@@ -47,8 +47,7 @@ FROM
 	    COUNT(t2.[InvoiceID]) as CountInv
 	 FROM [Sales].[Customers] t1
      JOIN [Sales].[Invoices] t2 on t1.CustomerID=t2.CustomerID
-     JOIN [Sales].[InvoiceLines] t3 on t2.InvoiceID=t3.InvoiceID
-	 JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID
+      JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID
 	 Where t1.CustomerID between 2 and 6
 	 GROUP BY SUBSTRING([CustomerName],(CHARINDEX('(',[CustomerName])+1),CHARINDEX(')',[CustomerName])-CHARINDEX('(',[CustomerName])-1),
 	 FORMAT(datefromparts(year(t2.InvoiceDate),month(t2.InvoiceDate),1), 'dd.MM.yyyy')
