@@ -312,6 +312,7 @@ GO
 RECONFIGURE;
 GO
 
+USE [WideWorldImporters]
 SELECT @@SERVERNAME
 
 exec master..xp_cmdshell 'bcp "Sales.Customers" out "C:\Users\denisova_t\Desktop\TEST.txt" -T -w -t"%%*" -S  KHD-OLAP'
@@ -320,3 +321,15 @@ SELECT *
 INTO Sales.My_Customers
 FROM Sales.Customers
 WHERE 1 = 2 
+
+BULK INSERT Sales.My_Customers
+		FROM "C:\Users\denisova_t\Desktop\TEST.txt"
+		WITH ( BATCHSIZE = 1000
+			 , DATAFILETYPE = 'char'
+			 , FIELDTERMINATOR = '%%*' 
+			 , ROWTERMINATOR = '\n'
+			 , KEEPNULLS
+			 , TABLOCK
+			)
+
+DROP TABLE IF EXISTS Sales.My_Customers
