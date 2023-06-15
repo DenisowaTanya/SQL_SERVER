@@ -39,20 +39,18 @@ InvoiceMonth | Peeples Valley, AZ | Medicine Lodge, KS | Gasport, NY | Sylvanite
 -------------+--------------------+--------------------+-------------+--------------+------------
 (CHARINDEX(')',[CustomerName])-CHARINDEX('(',[CustomerName]))Tailspin Toys (Head Office)
 */
-SELECT tt2.*
+SELECT [InvoiceMonth],[Peeples Valley, AZ], [Sylvanite, MT], [Jessie, ND], [Gasport, NY], [Medicine Lodge, KS]
 FROM
      (Select  
 	    SUBSTRING([CustomerName],(CHARINDEX('(',[CustomerName])+1),CHARINDEX(')',[CustomerName])-CHARINDEX('(',[CustomerName])-1) as Customer,
 	    FORMAT(datefromparts(year(t2.InvoiceDate),month(t2.InvoiceDate),1), 'dd.MM.yyyy') as [InvoiceMonth],
-	    COUNT(t2.[InvoiceID]) as CountInv
+	    t2.[InvoiceID] as CountInv
 	 FROM [Sales].[Customers] t1
      JOIN [Sales].[Invoices] t2 on t1.CustomerID=t2.CustomerID
      JOIN [Sales].[CustomerTransactions] t4 on t2.InvoiceID=t4.InvoiceID
-	 Where t1.CustomerID between 2 and 6
-	 GROUP BY SUBSTRING([CustomerName],(CHARINDEX('(',[CustomerName])+1),CHARINDEX(')',[CustomerName])-CHARINDEX('(',[CustomerName])-1),
-	 FORMAT(datefromparts(year(t2.InvoiceDate),month(t2.InvoiceDate),1), 'dd.MM.yyyy')
+	 Where t1.CustomerID between 2 and 6	 
 	 ) tt1
-PIVOT (sum(CountInv) FOR Customer in ([Peeples Valley, AZ], [Sylvanite, MT], [Jessie, ND], [Gasport, NY], [Medicine Lodge, KS])) as tt2
+PIVOT (count(CountInv) FOR Customer in ([Peeples Valley, AZ], [Sylvanite, MT], [Jessie, ND], [Gasport, NY], [Medicine Lodge, KS])) as tt2
 ORDER BY [InvoiceMonth]
 
 /*
