@@ -315,7 +315,7 @@ GO
 USE [WideWorldImporters]
 SELECT @@SERVERNAME
 
-exec master..xp_cmdshell 'bcp "Sales.Customers" out "C:\Users\denisova_t\Desktop\TEST.txt" -T -w -t"%%*" -S  KHD-OLAP'
+exec master..xp_cmdshell 'bcp "WideWorldImporters.Sales.Customers" out "D:\test.txt" -T -w -t"%%*" -S  sostav454micel'
 
 SELECT *
 INTO Sales.My_Customers
@@ -323,7 +323,7 @@ FROM Sales.Customers
 WHERE 1 = 2 
 
 BULK INSERT Sales.My_Customers
-		FROM "C:\Users\denisova_t\Desktop\TEST.txt"
+		FROM "D:\test.txt"
 		WITH ( BATCHSIZE = 1000
 			 , DATAFILETYPE = 'char'
 			 , FIELDTERMINATOR = '%%*' 
