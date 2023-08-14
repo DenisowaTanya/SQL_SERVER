@@ -14,7 +14,8 @@ CREATE TABLE My_schema.CountInv(
 [CustomerID] [int] NOT NULL,
 [DateBegin] [date] NULL,
 [DateEnd] [date] NULL,
-[InvoicesCount] [int] NOT NULL)
+[InvoicesCount] [int] NOT NULL,
+[ReportDate] [datetime])
 
 
 --MessageType
@@ -137,32 +138,33 @@ BEGIN
 		@MessageType = Message_Type_Name
 	FROM [dbo].[TargetQueueWWI];
 
-	SELECT @Message;  --íå äëÿ ïðîäà
+	
 
 	SET @xml = CAST(@Message AS XML);
 
-	SELECT @CustomerID = R.Cus.value('@InvoiceID','INT'),
+	SELECT @CustomerID = R.Cus.value('@CustomerID','INT'),
 			@DataStart = R.Cus.value('@DataStart','date'),
 			@DataEnd = R.Cus.value('@DataEnd','date')
 	FROM @xml.nodes('/RequestMessage/Inv') as R(Cus);
 
-	SELECT @CustomerID, @DataStart, @DataEnd
-
-
+	
 	IF EXISTS (SELECT * FROM Sales.Invoices WHERE CustomerID = @CustomerID)
 	BEGIN
 		
-		INSERT INTO My_schema.CountInv 
+	
+	INSERT INTO My_schema.CountInv 
 				([CustomerID]
 			  ,[DateBegin]
 			  ,[DateEnd]
-			  ,[InvoicesCount])
+			  ,[InvoicesCount]
+			  ,[ReportDate])
 		SELECT @CustomerID,
 		@DataStart,
 		@DataEnd,
-		COUNT([InvoiceID])
+		COUNT(*),
+		GETDATE()
 		FROM [Sales].[Invoices]
-		WHERE [CustomerID]=@CustomerID and  [InvoiceDate] BETWEEN @DataStart AND @DataEnd
+		WHERE [CustomerID]=@CustomerID and  [InvoiceDate] BETWEEN @DataStart AND @DataEnd and @CustomerID is not null
 		GROUP BY [CustomerID]
 	END;
 	
@@ -177,17 +179,17 @@ BEGIN
 		MESSAGE TYPE
 		[//WWI/SB/ReplyMessage]
 		(@ReplyMessage);
+
 		END CONVERSATION @TargetDlgHandle;
 	END 
 	
-	SELECT @ReplyMessage AS SentReplyMessage; --íå äëÿ ïðîäà
 
 	COMMIT TRAN;
 END
 
 GO
 
-CREATE PROCEDURE My_schema.ConfirmCustomer
+CREATE OR ALTER PROCEDURE My_schema.ConfirmCustomer
 AS
 BEGIN
 	--Receiving Reply Message from the Target.	
@@ -200,10 +202,13 @@ BEGIN
 			@InitiatorReplyDlgHandle=Conversation_Handle
 			,@ReplyReceivedMessage=Message_Body
 		FROM dbo.InitiatorQueueWWI; 
-		
+
+			
 		END CONVERSATION @InitiatorReplyDlgHandle; 
 		
-		SELECT @ReplyReceivedMessage AS ReceivedRepliedMessage; --íå äëÿ ïðîäà
+		
+		--SELECT @ReplyReceivedMessage AS ReceivedRepliedMessage; --íå äëÿ ïðîäà
+		--insert into My_schema.ConfirmCustomerLog select getdate(),@ReplyReceivedMessage
 
 	COMMIT TRAN; 
 END
@@ -219,13 +224,13 @@ ALTER QUEUE [dbo].[InitiatorQueueWWI] WITH STATUS = ON , RETENTION = OFF , POISO
 
 GO
 ALTER QUEUE [dbo].[TargetQueueWWI] WITH STATUS = ON , RETENTION = OFF , POISON_MESSAGE_HANDLING (STATUS = OFF)
-	, ACTIVATION (  STATUS = OFF ,
+	, ACTIVATION (  STATUS = ON ,
         PROCEDURE_NAME = My_Schema.GetCustomer, MAX_QUEUE_READERS = 1, EXECUTE AS OWNER) ; 
 
 GO
 
 
-EXEC [MY_schema].[SendCustomer] 832,'2013-01-01','2013-01-02'
+EXEC [MY_schema].[SendCustomer] 76,'2013-01-01','2014-05-31'
 SELECT * FROM [MY_schema].[CountInv]
 
 SELECT * FROM sys.service_contract_message_usages; 
