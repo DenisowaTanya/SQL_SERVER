@@ -157,6 +157,14 @@ WHERE StockItemID in (230,231,233)
 
 --Посмотрим, могу ли я удалить таблицу  CustomerTransactions
 
+SELECT Inv.*
+FROM Sales.Invoices AS Inv 
+WHERE not exists (SELECT * 
+		  FROM Sales.CustomerTransactions AS Trans 
+		  WHERE Trans.InvoiceID = Inv.InvoiceID)
+
+--или аналогично первой проверке
+
 select * from Sales.Invoices AS Inv 
 left join Sales.CustomerTransactions AS Trans ON Trans.InvoiceID = Inv.InvoiceID
 where Trans.InvoiceID is null
